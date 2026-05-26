@@ -10,7 +10,7 @@ const Footer = () => {
       <Typography className="footer-item" variant="subtitle1">
         Magic: The Gathering ® and Magic: The Gathering Arena are trademarks of{" "}
         <a href="https://company.wizards.com/">
-          Wizards of the Coast LLC © 1993-2024
+          Wizards of the Coast LLC © 1993-2026
         </a>
         . All Rights Reserved.
       </Typography>
