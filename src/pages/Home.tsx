@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { ListCard } from "./types";
+import { ListCard } from "../types";
 import { orderBy, uniqBy } from "lodash";
 import {
   Alert,
@@ -10,13 +10,13 @@ import {
   TextField,
 } from "@mui/material";
 import React from "react";
-import { cleanName } from "./util";
+import { cleanName } from "../util";
 import { Add, Casino, Remove, Upload } from "@mui/icons-material";
-import ThemeContextProvider from "./ThemeContextProvider";
-import Header from "./Header";
-import Footer from "./Footer";
-import CardTable from "./CardTable";
-import { useArenaCards } from "./hooks/useArenaCards";
+import ThemeContextProvider from "../ThemeContextProvider";
+import Header from "../Header";
+import Footer from "../Footer";
+import CardTable from "../CardTable";
+import { useArenaCards } from "../hooks/useArenaCards";
 
 const COLOR_LAND_MAP = {
   W: "Plains",
@@ -318,10 +318,10 @@ const Home = () => {
             cardsWithUsage.filter(
               (card) =>
                 !!card.usage &&
-                !Object.values(COLOR_LAND_MAP).includes((card) => card.name),
+                !Object.values(COLOR_LAND_MAP).includes(card.name),
             ),
-            ["usage"],
-            ["desc"],
+            ["owned", "usage"],
+            ["desc", "desc"],
           )
         : cardsWithUsage
             .filter(

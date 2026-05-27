@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { Check, Close } from "@mui/icons-material";
 
 const colDef: GridColDef[] = [
   {
@@ -12,7 +13,7 @@ const colDef: GridColDef[] = [
           onMouseEnter={(e) => {
             data.row.onNameHoverStart(
               e.currentTarget,
-              data?.row?.images?.normal
+              data?.row?.images?.normal,
             );
           }}
           onMouseLeave={() => data.row.onNameHoverEnd()}
@@ -103,6 +104,14 @@ const colDef: GridColDef[] = [
         .map((v) => Number(v));
       if (values2.length === 0) values2 = [0];
       return Math.min(...values1) > Math.min(...values2);
+    },
+  },
+  {
+    field: "owned",
+    headerName: "Owned",
+    width: 70,
+    renderCell: (data) => {
+      return data.value === null ? "" : data.value ? <Check /> : <Close />;
     },
   },
 ];

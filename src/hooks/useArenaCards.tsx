@@ -1,5 +1,6 @@
 // src/hooks/useArenaCards.ts
 import { useState, useEffect } from "react";
+import { cleanName } from "../util";
 
 async function loadArenaCards() {
   const manifest = await fetch("/arena-cards/manifest.json").then((r) =>
@@ -38,10 +39,20 @@ export const useArenaCards = () => {
 
     async function load() {
       try {
-        const [cards, legs] = await Promise.all([
+        const [arenaCards, legs] = await Promise.all([
           loadArenaCards(),
           loadLegends(),
         ]);
+
+        const collectionData = localStorage.getItem("mtga_collection");
+        const collection = collectionData ? JSON.parse(collectionData) : {};
+        const isCollectionEmpty = Object.keys(collection).length === 0;
+        const cards = arenaCards.map((card) => {
+          if (isCollectionEmpty) return { ...card, owned: null };
+          const cleanedName = cleanName(card.name);
+          const count = collection[cleanedName] || 0;
+          return { ...card, owned: count > 0 };
+        });
         if (!cancelled) {
           setArenaCards(cards);
           setLegends(legs);

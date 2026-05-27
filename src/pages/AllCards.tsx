@@ -1,11 +1,11 @@
 // @ts-nocheck
-import ThemeContextProvider from "./ThemeContextProvider";
-import Header from "./Header";
-import Footer from "./Footer";
-import CardTable from "./CardTable";
+import ThemeContextProvider from "../ThemeContextProvider";
+import Header from "../Header";
+import Footer from "../Footer";
+import CardTable from "../CardTable";
 import React from "react";
 import { Popper } from "@mui/material";
-import { useArenaCards } from "./hooks/useArenaCards";
+import { useArenaCards } from "../hooks/useArenaCards";
 
 const AllCards = () => {
   const [previewImage, setPreviewImage] = React.useState(null);
