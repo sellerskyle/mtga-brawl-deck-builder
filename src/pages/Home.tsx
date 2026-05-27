@@ -233,6 +233,7 @@ const Home = () => {
         .trim()
         .toLowerCase()
         .replaceAll(",", "")
+        .replaceAll("& ", "")
         .replaceAll(" ", "-")
         .replaceAll(".", "")
         .replaceAll("á", "a")
@@ -341,6 +342,7 @@ const Home = () => {
         ? consideredCards.filter(
             (card) =>
               card.type.includes("Land") &&
+              card.owned === true &&
               card.usage > nonLands[nonLands.length - 1].usage &&
               !Object.values(COLOR_LAND_MAP).includes(card.name),
           )
