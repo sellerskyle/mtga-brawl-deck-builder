@@ -3,8 +3,6 @@ import {
   Menu as MuiMenu,
   MenuOpen,
   Inbox,
-  Mail,
-  Add,
   LibraryAdd,
   FormatListNumbered,
 } from "@mui/icons-material";
@@ -19,7 +17,7 @@ import {
   ListItemText,
 } from "@mui/material";
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const pages = [
   {
@@ -31,6 +29,11 @@ const pages = [
     name: "All Cards",
     icon: <FormatListNumbered />,
     to: "/all-cards",
+  },
+  {
+    name: "Collection",
+    icon: <Inbox />,
+    to: "/upload-collection",
   },
 ];
 

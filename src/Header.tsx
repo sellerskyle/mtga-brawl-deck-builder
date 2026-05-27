@@ -2,6 +2,7 @@
 import { Typography } from "@mui/material";
 import Menu from "./Menu";
 import ToggleTheme from "./ToggleTheme";
+import CollectionModal from "./CollectionModal";
 
 const Header = () => {
   return (
@@ -11,7 +12,10 @@ const Header = () => {
     >
       <div className="stack-view">
         <Menu />
-        <ToggleTheme />
+        <div className="right-side-actions">
+          <ToggleTheme />
+          <CollectionModal />
+        </div>
       </div>
       <Menu className="row-view" />
       <div
@@ -35,7 +39,10 @@ const Header = () => {
           </Typography>
         </div>
       </div>
-      <ToggleTheme className="row-view" />
+      <div className="right-side-actions">
+        <ToggleTheme className="row-view" />
+        <CollectionModal className="row-view" />
+      </div>
     </div>
   );
 };

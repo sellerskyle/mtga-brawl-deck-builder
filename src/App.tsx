@@ -1,7 +1,8 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
-import Home from "./Home";
-import AllCards from "./AllCards";
+import Home from "./pages/Home";
+import AllCards from "./pages/AllCards";
+import Collection from "./pages/Collection";
 
 const App = () => {
   const router = createBrowserRouter([
@@ -12,6 +13,10 @@ const App = () => {
     {
       path: "/all-cards",
       element: <AllCards />,
+    },
+    {
+      path: "/upload-collection",
+      element: <Collection />,
     },
   ]);
 
