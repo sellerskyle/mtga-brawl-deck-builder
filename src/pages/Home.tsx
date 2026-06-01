@@ -63,7 +63,12 @@ const getJSON = (url: string, callback) => {
 };
 
 const Home = () => {
-  const { arenaCards, legends, addToManualCollection, removeFromManualCollection } = useArenaCards();
+  const {
+    arenaCards,
+    legends,
+    addToManualCollection,
+    removeFromManualCollection,
+  } = useArenaCards();
 
   const [legend, setLegend] = React.useState(
     arenaCards.find(

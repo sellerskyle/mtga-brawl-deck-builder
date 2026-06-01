@@ -10,7 +10,8 @@ import { useArenaCards } from "../hooks/useArenaCards";
 const AllCards = () => {
   const [previewImage, setPreviewImage] = React.useState(null);
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const { arenaCards, addToManualCollection, removeFromManualCollection } = useArenaCards();
+  const { arenaCards, addToManualCollection, removeFromManualCollection } =
+    useArenaCards();
 
   return (
     <ThemeContextProvider>
