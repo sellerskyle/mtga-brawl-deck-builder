@@ -1,8 +1,10 @@
 // @ts-nocheck
+import React, { useState } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { Check, Close } from "@mui/icons-material";
+import { Check, Close, MoreVert } from "@mui/icons-material";
+import { IconButton, Menu, MenuItem } from "@mui/material";
 
-const colDef: GridColDef[] = [
+const colDef = [
   {
     field: "name",
     headerName: "Name",
@@ -69,7 +71,7 @@ const colDef: GridColDef[] = [
     headerName: "Usage",
     width: 120,
     renderCell: (data) => {
-      return !!data.value ? `${Math.round(data.value * 100)}%` : "—";
+      return data.value ? `${Math.round(data.value * 100)}%` : "—";
     },
   },
   {
@@ -114,6 +116,25 @@ const colDef: GridColDef[] = [
       return data.value === null ? "" : data.value ? <Check /> : <Close />;
     },
   },
+  {
+    field: "actions",
+    headerName: "",
+    width: 70,
+    sortable: false,
+    renderCell: (data) => {
+      return (
+        <IconButton
+          size="small"
+          onClick={(event) => {
+            data.row?.onOpenActionsMenu?.(event.currentTarget, data.row);
+            event.stopPropagation();
+          }}
+        >
+          <MoreVert fontSize="small" />
+        </IconButton>
+      );
+    },
+  },
 ];
 
 const CardTable = ({
@@ -124,26 +145,71 @@ const CardTable = ({
   onRowSelected,
   onNameHoverStart,
   onNameHoverEnd,
+  onAddToCollection,
+  onRemoveFromCollection,
 }) => {
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [menuRow, setMenuRow] = useState(null);
+
+  const openActionsMenu = (anchor, row) => {
+    setMenuAnchor(anchor);
+    setMenuRow(row);
+  };
+
+  const closeActionsMenu = () => {
+    setMenuAnchor(null);
+    setMenuRow(null);
+  };
+
+  const handleAddToCollection = () => {
+    if (menuRow && onAddToCollection) {
+      onAddToCollection(menuRow.name);
+    }
+    closeActionsMenu();
+  };
+
+  const handleRemoveFromCollection = () => {
+    if (menuRow && onRemoveFromCollection) {
+      onRemoveFromCollection(menuRow.name);
+    }
+    closeActionsMenu();
+  };
+
   return (
-    <DataGrid
-      columns={
-        showUsage ? colDef : colDef.filter((col) => col.field !== "usage")
-      }
-      rows={data.map((row) => ({
-        ...row,
-        onNameHoverStart: onNameHoverStart,
-        onNameHoverEnd: onNameHoverEnd,
-      }))}
-      checkboxSelection={!!allowSelection}
-      rowSelectionModel={selectedRowIds}
-      onRowSelectionModelChange={(rowSelectionModel, details) =>
-        onRowSelected(rowSelectionModel)
-      }
-      slots={{
-        toolbar: GridToolbar,
-      }}
-    />
+    <>
+      <DataGrid
+        columns={
+          showUsage ? colDef : colDef.filter((col) => col.field !== "usage")
+        }
+        rows={data.map((row) => ({
+          ...row,
+          onNameHoverStart: onNameHoverStart,
+          onNameHoverEnd: onNameHoverEnd,
+          onOpenActionsMenu: openActionsMenu,
+        }))}
+        checkboxSelection={!!allowSelection}
+        rowSelectionModel={selectedRowIds}
+        onRowSelectionModelChange={(rowSelectionModel) =>
+          onRowSelected(rowSelectionModel)
+        }
+        slots={{
+          toolbar: GridToolbar,
+        }}
+      />
+      <Menu
+        open={Boolean(menuAnchor)}
+        anchorEl={menuAnchor}
+        onClose={closeActionsMenu}
+      >
+        {menuRow?.manualCollection ? (
+          <MenuItem onClick={handleRemoveFromCollection}>
+            Remove from Collection
+          </MenuItem>
+        ) : (
+          <MenuItem onClick={handleAddToCollection}>Add to Collection</MenuItem>
+        )}
+      </Menu>
+    </>
   );
 };
 

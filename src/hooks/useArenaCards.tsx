@@ -1,5 +1,5 @@
 // src/hooks/useArenaCards.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { cleanName } from "../util";
 
 async function loadArenaCards() {
@@ -28,11 +28,20 @@ async function loadLegends(): Promise<string[]> {
   return chunks.flat();
 }
 
+const parseJson = (value) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
 export const useArenaCards = () => {
   const [arenaCards, setArenaCards] = useState([]);
   const [legends, setLegends] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [refreshCount, setRefreshCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,14 +54,29 @@ export const useArenaCards = () => {
         ]);
 
         const collectionData = localStorage.getItem("mtga_collection");
-        const collection = collectionData ? JSON.parse(collectionData) : {};
-        const isCollectionEmpty = Object.keys(collection).length === 0;
+        const manualCollectionData = localStorage.getItem("manual_collection");
+        const collection = collectionData ? parseJson(collectionData) : {};
+        const manualCollection = manualCollectionData
+          ? parseJson(manualCollectionData)
+          : {};
+
+        const hasCollectionData =
+          Object.keys(collection || {}).length > 0 ||
+          Object.keys(manualCollection || {}).length > 0;
+
         const cards = arenaCards.map((card) => {
-          if (isCollectionEmpty) return { ...card, owned: null };
           const cleanedName = cleanName(card.name);
-          const count = collection[cleanedName] || 0;
-          return { ...card, owned: count > 0 };
+          const collectionCount = collection?.[cleanedName] || 0;
+          const inManualCollection = !!manualCollection?.[cleanedName];
+          return {
+            ...card,
+            owned: hasCollectionData
+              ? collectionCount > 0 || inManualCollection
+              : null,
+            manualCollection: inManualCollection,
+          };
         });
+
         if (!cancelled) {
           setArenaCards(cards);
           setLegends(legs);
@@ -70,7 +94,54 @@ export const useArenaCards = () => {
     return () => {
       cancelled = true;
     };
+  }, [refreshCount]);
+
+  const addToManualCollection = useCallback((cardName: string) => {
+    try {
+      const storageValue = localStorage.getItem("manual_collection");
+      const manualCollection = storageValue
+        ? parseJson(storageValue) || {}
+        : {};
+      const cleanedName = cleanName(cardName);
+
+      manualCollection[cleanedName] = 1;
+
+      localStorage.setItem(
+        "manual_collection",
+        JSON.stringify(manualCollection),
+      );
+      setRefreshCount((current) => current + 1);
+    } catch {
+      // Ignore localStorage errors
+    }
   }, []);
 
-  return { arenaCards, legends, loading, error };
+  const removeFromManualCollection = useCallback((cardName: string) => {
+    try {
+      const storageValue = localStorage.getItem("manual_collection");
+      const manualCollection = storageValue
+        ? parseJson(storageValue) || {}
+        : {};
+      const cleanedName = cleanName(cardName);
+
+      delete manualCollection[cleanedName];
+
+      localStorage.setItem(
+        "manual_collection",
+        JSON.stringify(manualCollection),
+      );
+      setRefreshCount((current) => current + 1);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  return {
+    arenaCards,
+    legends,
+    loading,
+    error,
+    addToManualCollection,
+    removeFromManualCollection,
+  };
 };

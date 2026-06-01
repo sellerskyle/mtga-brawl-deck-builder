@@ -63,7 +63,7 @@ const getJSON = (url: string, callback) => {
 };
 
 const Home = () => {
-  const { arenaCards, legends } = useArenaCards();
+  const { arenaCards, legends, addToManualCollection, removeFromManualCollection } = useArenaCards();
 
   const [legend, setLegend] = React.useState(
     arenaCards.find(
@@ -507,6 +507,8 @@ const Home = () => {
                 setAnchorEl(null);
                 setPreviewImage(null);
               }}
+              onAddToCollection={addToManualCollection}
+              onRemoveFromCollection={removeFromManualCollection}
             />
           </div>
           <div style={{ display: "flex", gap: "1em" }}>
