@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import React from "react";
 import { cleanName } from "../util";
-import { Add, Casino, Remove, Upload } from "@mui/icons-material";
+import { Add, Casino, CopyAll, Remove, Upload } from "@mui/icons-material";
 import ThemeContextProvider from "../ThemeContextProvider";
 import Header from "../Header";
 import Footer from "../Footer";
@@ -555,13 +555,21 @@ const Home = () => {
         </div>
       )}
       {deckString && (
-        <TextField
-          className="main-content"
-          multiline
-          value={deckString}
-          maxRows={20}
-          placeholder="Select a commander to get a decklist"
-        />
+        <div className="deck-string-container">
+          <TextField
+            className="deck-string-input"
+            multiline
+            value={deckString}
+            maxRows={20}
+            placeholder="Select a commander to get a decklist"
+          />
+          <IconButton
+            className="copy-button"
+            onClick={navigator.clipboard.writeText(deckString)}
+          >
+            <CopyAll />
+          </IconButton>
+        </div>
       )}
       <Footer />
       {!!previewImage && (

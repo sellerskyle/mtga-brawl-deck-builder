@@ -3,8 +3,10 @@ import { Typography } from "@mui/material";
 import Menu from "./Menu";
 import ToggleTheme from "./ToggleTheme";
 import CollectionModal from "./CollectionModal";
+import { useNavigate } from "react-router";
 
 const Header = () => {
+  const navigate = useNavigate();
   return (
     <div
       id="header"
@@ -20,7 +22,13 @@ const Header = () => {
       <Menu className="row-view" />
       <div
         className="site-info"
-        style={{ display: "flex", gap: "1em", alignItems: "center" }}
+        style={{
+          display: "flex",
+          gap: "1em",
+          alignItems: "center",
+          cursor: "pointer",
+        }}
+        onClick={() => navigate("/")}
       >
         <img src="/brawl.svg" style={{ height: "4em" }} />
         <div

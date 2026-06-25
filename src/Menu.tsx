@@ -30,11 +30,6 @@ const pages = [
     icon: <FormatListNumbered />,
     to: "/all-cards",
   },
-  {
-    name: "Collection",
-    icon: <Inbox />,
-    to: "/upload-collection",
-  },
 ];
 
 const Menu = ({ className }) => {

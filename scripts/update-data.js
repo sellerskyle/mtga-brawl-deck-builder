@@ -18,8 +18,12 @@ const { streamArray } = streamJsonArray;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const DEFAULT_CARDS_META_URL =
-  "https://api.scryfall.com/bulk-data/default-cards";
+  "https://api.scryfall.com/bulk-data/default_cards";
 const TMP_FILE = join(tmpdir(), "default-cards.json");
+const FETCH_HEADERS = {
+  Accept: "application/json",
+  "User-Agent": "mtga-brawl-deck-builder-update-script/0.0.0",
+};
 const MAX_CHUNK_BYTES = 90 * 1024 * 1024; // 90MB — comfortable margin under GitHub's 100MB limit
 
 const ARENA_CARDS_DIR = join(__dirname, "../public/arena-cards");
@@ -170,13 +174,24 @@ function writeChunks(items, outputDir, updatedAt) {
   return chunkIndex;
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function fetchJson(url) {
+  const res = await fetch(url, { headers: FETCH_HEADERS });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(
+      `Fetch failed: ${url} ${res.status} ${res.statusText}\n${body}`,
+    );
+  }
+  return await res.json();
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 // 1. Resolve download URI
 console.log("🔍 Fetching bulk-data metadata...");
-const metaRes = await fetch(DEFAULT_CARDS_META_URL);
-if (!metaRes.ok) throw new Error(`Metadata fetch failed: ${metaRes.status}`);
-const meta = await metaRes.json();
+const meta = await fetchJson(DEFAULT_CARDS_META_URL);
 console.log(`   Updated at : ${meta.updated_at}`);
 console.log(`   Download   : ${meta.download_uri}`);
 console.log(
@@ -186,8 +201,9 @@ console.log(
 // 2. Stream download to /tmp
 // Node fetch auto-decompresses Content-Encoding: gzip, so the body stream is plain JSON
 console.log("\n⬇️  Downloading default cards...");
-const dlRes = await fetch(meta.download_uri);
-if (!dlRes.ok) throw new Error(`Download failed: ${dlRes.status}`);
+const dlRes = await fetch(meta.download_uri, { headers: FETCH_HEADERS });
+if (!dlRes.ok)
+  throw new Error(`Download failed: ${dlRes.status} ${dlRes.statusText}`);
 await pipeline(dlRes.body, createWriteStream(TMP_FILE));
 console.log("✅ Download complete");
 
