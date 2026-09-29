@@ -201,7 +201,7 @@ console.log(
 // 2. Stream download to /tmp
 // Node fetch auto-decompresses Content-Encoding: gzip, so the body stream is plain JSON
 console.log("\n⬇️  Downloading default cards...");
-const dlRes = await fetch(meta.download_uri, { headers: FETCH_HEADERS });
+const dlRes = await fetch(meta.jsonl_download_uri, { headers: FETCH_HEADERS });
 if (!dlRes.ok)
   throw new Error(`Download failed: ${dlRes.status} ${dlRes.statusText}`);
 await pipeline(dlRes.body, createWriteStream(TMP_FILE));
