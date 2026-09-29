@@ -7,19 +7,16 @@ import {
   existsSync,
 } from "fs";
 import { pipeline } from "stream/promises";
+import { createInterface } from "readline";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import streamJson from "stream-json";
-import streamJsonArray from "stream-json/streamers/StreamArray.js";
 import { tmpdir } from "os";
 
-const { parser } = streamJson;
-const { streamArray } = streamJsonArray;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const DEFAULT_CARDS_META_URL =
   "https://api.scryfall.com/bulk-data/default_cards";
-const TMP_FILE = join(tmpdir(), "default-cards.json");
+const TMP_FILE = join(tmpdir(), "default-cards.jsonl");
 const FETCH_HEADERS = {
   Accept: "application/json",
   "User-Agent": "mtga-brawl-deck-builder-update-script/0.0.0",
@@ -174,8 +171,6 @@ function writeChunks(items, outputDir, updatedAt) {
   return chunkIndex;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 async function fetchJson(url) {
   const res = await fetch(url, { headers: FETCH_HEADERS });
   if (!res.ok) {
@@ -193,13 +188,13 @@ async function fetchJson(url) {
 console.log("🔍 Fetching bulk-data metadata...");
 const meta = await fetchJson(DEFAULT_CARDS_META_URL);
 console.log(`   Updated at : ${meta.updated_at}`);
-console.log(`   Download   : ${meta.download_uri}`);
+console.log(`   Download   : ${meta.jsonl_download_uri}`);
 console.log(
   `   Size       : ${(meta.size / 1024 / 1024).toFixed(1)} MB (compressed)`,
 );
 
 // 2. Stream download to /tmp
-// Node fetch auto-decompresses Content-Encoding: gzip, so the body stream is plain JSON
+// Node fetch auto-decompresses Content-Encoding: gzip, so the body is plain JSONL
 console.log("\n⬇️  Downloading default cards...");
 const dlRes = await fetch(meta.jsonl_download_uri, { headers: FETCH_HEADERS });
 if (!dlRes.ok)
@@ -207,58 +202,70 @@ if (!dlRes.ok)
 await pipeline(dlRes.body, createWriteStream(TMP_FILE));
 console.log("✅ Download complete");
 
-// 3. Stream-parse, filter, and deduplicate (all in one pass — low memory)
+// 3. Stream-parse line by line (JSONL: one card object per line), filter, and deduplicate
 console.log("\n🔍 Parsing cards...");
 const now = new Date();
 const seenNames = new Set();
 const arenaCards = [];
 
-await new Promise((resolve, reject) => {
-  createReadStream(TMP_FILE)
-    .pipe(parser())
-    .pipe(streamArray())
-    .on("data", ({ value: card }) => {
-      const name = cleanName(card.name);
-
-      // Dedup by cleaned name (mirrors uniqBy(..., 'name'))
-      if (seenNames.has(name)) return;
-
-      if (
-        card.games?.includes("arena") &&
-        card.legalities?.brawl === "legal" &&
-        isReleased(card.released_at, now) &&
-        !excludeCards.includes(card.name)
-      ) {
-        seenNames.add(name);
-        arenaCards.push({
-          name,
-          id: name,
-          images: {
-            normal:
-              card.image_uris?.normal ??
-              card.card_faces?.[0]?.image_uris?.normal ??
-              null,
-          },
-          cmc: card.cmc,
-          type: card.type_line,
-          colors: card.color_identity,
-          set: card.set,
-          digital: card.digital,
-          rarity: card.rarity,
-          layout: card.layout,
-          prices: {
-            regular: card.prices?.usd ?? null,
-            foil: card.prices?.usd_foil ?? null,
-            etched: card.prices?.etched ?? null,
-          },
-          edhRank: card.edhrec_rank ?? null,
-        });
-      }
-    })
-    .on("end", resolve)
-    .on("error", reject);
+const rl = createInterface({
+  input: createReadStream(TMP_FILE, { encoding: "utf8" }),
+  crlfDelay: Infinity,
 });
 
+let lineNumber = 0;
+for await (const line of rl) {
+  lineNumber++;
+  if (!line.trim()) continue;
+
+  let card;
+  try {
+    card = JSON.parse(line);
+  } catch (err) {
+    throw new Error(
+      `Invalid JSON on line ${lineNumber}: ${err.message}\n${line.slice(0, 200)}`,
+    );
+  }
+
+  const name = cleanName(card.name);
+
+  // Dedup by cleaned name (mirrors uniqBy(..., 'name'))
+  if (seenNames.has(name)) continue;
+
+  if (
+    card.games?.includes("arena") &&
+    card.legalities?.brawl === "legal" &&
+    isReleased(card.released_at, now) &&
+    !excludeCards.includes(card.name)
+  ) {
+    seenNames.add(name);
+    arenaCards.push({
+      name,
+      id: name,
+      images: {
+        normal:
+          card.image_uris?.normal ??
+          card.card_faces?.[0]?.image_uris?.normal ??
+          null,
+      },
+      cmc: card.cmc,
+      type: card.type_line,
+      colors: card.color_identity,
+      set: card.set,
+      digital: card.digital,
+      rarity: card.rarity,
+      layout: card.layout,
+      prices: {
+        regular: card.prices?.usd ?? null,
+        foil: card.prices?.usd_foil ?? null,
+        etched: card.prices?.usd_etched ?? null,
+      },
+      edhRank: card.edhrec_rank ?? null,
+    });
+  }
+}
+
+console.log(`   Read ${lineNumber} lines`);
 console.log(`✅ ${arenaCards.length} arena/brawl cards collected`);
 
 // 4. Sort by edhRank (mirrors sortBy(arenaCards, 'edhRank'))
